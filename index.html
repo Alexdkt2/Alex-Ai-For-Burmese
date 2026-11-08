@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10162b">
+  <title>Alex AI Tools — Work smarter</title>
+  <meta name="description" content="CV maker, live voice translator and Thailand job finder.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Alex AI Tools home"><span class="brand-mark">A</span><span>Alex <b>AI Tools</b></span></a>
+    <span class="top-note"><i class="status-dot"></i> Your personal AI workspace</span>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">ONE WORKSPACE · THREE USEFUL TOOLS</div>
+      <h1>Make your next move<br><span>with confidence.</span></h1>
+      <p>Create a professional CV, translate spoken conversations, and discover job opportunities across Thailand.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" data-open="cv">Create my CV <span>↗</span></button>
+        <button class="btn btn-ghost" data-open="jobs">Find jobs</button>
+      </div>
+      <div class="hero-foot"><span>Designed for mobile</span><span>•</span><span>English · Burmese · Thai and more</span></div>
+    </section>
+
+    <section class="tool-grid" aria-label="Tools">
+      <article class="tool-card cv-card">
+        <div class="card-icon">▤</div><div class="card-kicker">01 / CAREER</div>
+        <h2>CV Maker</h2>
+        <p>Build a clean, editable CV and print it or save it as a PDF.</p>
+        <button class="text-link" data-open="cv">Open CV Maker <span>→</span></button>
+      </article>
+      <article class="tool-card voice-card">
+        <div class="card-icon">◉</div><div class="card-kicker">02 / COMMUNICATION</div>
+        <h2>Voice Translator</h2>
+        <p>Speak, see the recognized words, and translate between languages.</p>
+        <button class="text-link" data-open="voice">Open Translator <span>→</span></button>
+      </article>
+      <article class="tool-card jobs-card">
+        <div class="card-icon">⌕</div><div class="card-kicker">03 / OPPORTUNITY</div>
+        <h2>Thailand Job Finder</h2>
+        <p>Search job listings across Thailand by role, province, and language.</p>
+        <button class="text-link" data-open="jobs">Explore jobs <span>→</span></button>
+      </article>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="workspace-head">
+        <div><div class="eyebrow">ALEX AI WORKSPACE</div><h2 id="workspace-title">Choose a tool to get started</h2></div>
+        <button class="close-btn" id="close-workspace" aria-label="Close tool">×</button>
+      </div>
+
+      <section class="tool-panel" id="panel-cv" hidden>
+        <div class="panel-intro"><span class="panel-tag">01 · CV MAKER</span><h3>Your next opportunity starts here.</h3><p>Fill in your details. Use Preview to review, then Print / Save PDF.</p></div>
+        <div class="cv-layout">
+          <form id="cv-form" class="form-card">
+            <div class="form-section-title">Personal details</div>
+            <label>Full name<input name="name" value="Alex" required></label>
+            <div class="two-col"><label>Phone<input name="phone" placeholder="+66 ..."></label><label>Email<input name="email" type="email" placeholder="you@example.com"></label></div>
+            <label>Location<input name="location" placeholder="Bangkok, Thailand"></label>
+            <label>Professional title<input name="headline" placeholder="Hotel Guest Service | Customer Service"></label>
+            <div class="form-section-title">Profile</div>
+            <label>Professional summary<textarea name="summary" rows="3" placeholder="Write a short introduction about your experience and strengths."></textarea></label>
+            <div class="form-section-title">Experience</div>
+            <label>Work experience<textarea name="experience" rows="5" placeholder="Job title — Company — Dates&#10;• Main responsibility or achievement&#10;• Another relevant skill"></textarea></label>
+            <div class="form-section-title">Skills & education</div>
+            <label>Skills<textarea name="skills" rows="2" placeholder="Customer service, teamwork, communication"></textarea></label>
+            <label>Education<textarea name="education" rows="2" placeholder="Qualification — School — Year"></textarea></label>
+            <label>Languages<textarea name="languages" rows="2" placeholder="Burmese — Native; English — Intermediate"></textarea></label>
+            <div class="button-row"><button class="btn btn-primary" type="submit">Update preview</button><button class="btn btn-ghost" type="button" id="print-cv">Print / Save PDF</button></div>
+          </form>
+          <div class="cv-preview-wrap"><div class="preview-label">LIVE CV PREVIEW</div><article class="cv-paper" id="cv-preview">
+            <h1>Alex</h1><h3>Professional title</h3><p class="cv-contact">Phone · Email · Location</p><hr>
+            <h4>PROFILE</h4><p>Your professional summary will appear here.</p>
+            <h4>WORK EXPERIENCE</h4><p>Your experience will appear here.</p>
+            <h4>SKILLS</h4><p>Your skills will appear here.</p>
+            <h4>EDUCATION</h4><p>Your education will appear here.</p>
+            <h4>LANGUAGES</h4><p>Your languages will appear here.</p>
+          </article></div>
+        </div>
+      </section>
+
+      <section class="tool-panel" id="panel-voice" hidden>
+        <div class="panel-intro"><span class="panel-tag">02 · VOICE TRANSLATOR</span><h3>Let the conversation flow.</h3><p>Use your device microphone to recognize speech, then translate the text.</p></div>
+        <div class="translator-card">
+          <div class="language-row">
+            <label>Speak / source language<select id="source-lang"><option value="my-MM">Burmese</option><option value="en-US">English</option><option value="th-TH">Thai</option><option value="ru-RU">Russian</option><option value="zh-CN">Chinese</option><option value="hi-IN">Hindi</option><option value="ne-NP">Nepali</option><option value="ja-JP">Japanese</option><option value="ko-KR">Korean</option><option value="fr-FR">French</option><option value="de-DE">German</option><option value="es-ES">Spanish</option></select></label>
+            <button class="swap-btn" id="swap-languages" title="Swap languages">⇄</button>
+            <label>Translate into<select id="target-lang"><option value="th">Thai</option><option value="my">Burmese</option><option value="en">English</option><option value="ru">Russian</option><option value="zh">Chinese</option><option value="hi">Hindi</option><option value="ne">Nepali</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="fr">French</option><option value="de">German</option><option value="es">Spanish</option></select></label>
+          </div>
+          <div class="speech-controls"><button class="btn btn-primary" id="start-listening">🎙 Start speaking</button><button class="btn btn-ghost" id="stop-listening" disabled>Stop</button><span id="speech-status" class="status-text">Microphone is ready when supported by your browser.</span></div>
+          <label>Recognized speech<textarea id="speech-input" rows="4" placeholder="Your spoken words will appear here. You can also type or paste text."></textarea></label>
+          <div class="button-row"><button class="btn btn-primary" id="translate-text">Translate text</button><button class="btn btn-ghost" id="speak-result">🔊 Read translation</button><button class="btn btn-ghost" id="copy-result">Copy</button></div>
+          <label>Translation<textarea id="translation-output" rows="4" readonly placeholder="Your translation will appear here."></textarea></label>
+          <p class="small-note">Speech recognition depends on browser and device support. Translation uses the MyMemory public service; avoid entering confidential or sensitive information.</p>
+        </div>
+      </section>
+
+      <section class="tool-panel" id="panel-jobs" hidden>
+        <div class="panel-intro"><span class="panel-tag">03 · THAILAND JOB FINDER</span><h3>Find work anywhere in Thailand.</h3><p>Search across public job boards and employer career pages. Results open on the original website.</p></div>
+        <div class="job-search-card">
+          <label>Job title or keyword<input id="job-keyword" value="hotel staff" placeholder="e.g. technician, plumber, bell boy"></label>
+          <div class="two-col">
+            <label>Province<select id="job-province"><option value="Thailand">All Thailand</option><option>Bangkok</option><option>Chonburi</option><option>Rayong</option><option>Phuket</option><option>Chiang Mai</option><option>Samut Prakan</option><option>Nonthaburi</option><option>Pathum Thani</option><option>Songkhla</option><option>Surat Thani</option><option>Krabi</option><option>Prachuap Khiri Khan</option><option>Nakhon Ratchasima</option><option>Khon Kaen</option></select></label>
+            <label>Search language<select id="job-language"><option value="both">Thai + English</option><option value="en">English</option><option value="th">Thai</option></select></label>
+          </div>
+          <button class="btn btn-primary full-btn" id="search-jobs">Search job websites ↗</button>
+          <div class="quick-searches"><span>Popular searches</span><button data-keyword="hotel bell boy">Bell Boy</button><button data-keyword="hotel technician">Technician</button><button data-keyword="plumber">Plumber</button><button data-keyword="housekeeping">Housekeeping</button><button data-keyword="customer service">Customer Service</button></div>
+        </div>
+        <div class="job-sources">
+          <div class="source-heading">Search on these job platforms</div>
+          <a target="_blank" rel="noopener" href="https://www.jobthai.com/">JobThai <span>↗</span></a>
+          <a target="_blank" rel="noopener" href="https://th.jobsdb.com/">JobsDB Thailand <span>↗</span></a>
+          <a target="_blank" rel="noopener" href="https://th.indeed.com/">Indeed Thailand <span>↗</span></a>
+          <a target="_blank" rel="noopener" href="https://www.linkedin.com/jobs/">LinkedIn Jobs <span>↗</span></a>
+          <a target="_blank" rel="noopener" href="https://www.jobtopgun.com/">JobTopGun <span>↗</span></a>
+          <p class="small-note">This first version opens targeted searches; it does not yet collect, deduplicate, or verify listings automatically. Check work-permit eligibility and employer details before applying.</p>
+        </div>
+      </section>
+    </section>
+
+    <footer><span>© 2026 Alex AI Tools</span><span>Built for useful everyday work.</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
