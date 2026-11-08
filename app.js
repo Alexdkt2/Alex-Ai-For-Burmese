@@ -1,137 +1,220 @@
 
+/* =========================================
+   ALEX AI TOOLS — COMPLETE APP.JS
+   ========================================= */
+
+/* 1. WORKSPACE NAVIGATION */
+
 const $ = (selector) => document.querySelector(selector);
 
-// ==========================================
-// 1. CV MAKER
-// ==========================================
+const workspace = $("#workspace");
+const workspaceTitle = $("#workspace-title");
+const closeWorkspace = $("#close-workspace");
+
+const toolPanels = {
+  cv: {
+    element: $("#panel-cv"),
+    title: "CV Maker"
+  },
+  voice: {
+    element: $("#panel-voice"),
+    title: "Voice Translator"
+  },
+  jobs: {
+    element: $("#panel-jobs"),
+    title: "Thailand Job Finder"
+  }
+};
+
+function openTool(name) {
+  const selected = toolPanels[name];
+
+  if (!selected || !workspace) return;
+
+  Object.values(toolPanels).forEach((panel) => {
+    if (panel.element) panel.element.hidden = true;
+  });
+
+  selected.element.hidden = false;
+  workspaceTitle.textContent = selected.title;
+  workspace.hidden = false;
+
+  workspace.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+
+  if (name === "cv") updateCV();
+}
+
+document.querySelectorAll("[data-open]").forEach((button) => {
+  button.addEventListener("click", () => {
+    openTool(button.dataset.open);
+  });
+});
+
+if (closeWorkspace) {
+  closeWorkspace.addEventListener("click", () => {
+    workspace.hidden = true;
+
+    Object.values(toolPanels).forEach((panel) => {
+      if (panel.element) panel.element.hidden = true;
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+}
+
+
+/* 2. CV MAKER */
 
 const cvForm = $("#cv-form");
 const cvPreview = $("#cv-preview");
-const templateSelect = $("#cv-template");
-const photoInput = $("#cv-photo");
+const cvTemplate = $("#cv-template");
+const cvPhoto = $("#cv-photo");
+const cvPhotoPreview = $("#cv-photo-preview");
 const photoContainer = $("#cv-photo-container");
-const photoPreview = $("#cv-photo-preview");
 const removePhotoButton = $("#remove-cv-photo");
+const printCVButton = $("#print-cv");
 
-function safe(value) {
-  return String(value || "").replace(/[&<>"']/g, (char) => ({
+let uploadedPhoto = "";
+
+function getCVValue(name) {
+  const field = cvForm?.elements.namedItem(name);
+  return field ? field.value.trim() : "";
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
-    "'": "&#39;"
-  }[char]));
+    "'": "&#039;"
+  })[character]);
 }
 
 function updateCV() {
   if (!cvForm || !cvPreview) return;
 
-  const data = Object.fromEntries(new FormData(cvForm).entries());
+  const name = getCVValue("name") || "Your Name";
+  const phone = getCVValue("phone");
+  const email = getCVValue("email");
+  const location = getCVValue("location");
+  const headline = getCVValue("headline");
+  const summary = getCVValue("summary");
+  const experience = getCVValue("experience");
+  const skills = getCVValue("skills");
+  const education = getCVValue("education");
+  const languages = getCVValue("languages");
 
-  const paragraph = (value, fallback) =>
-    `<p>${safe(value).replace(/\n/g, "<br>") || fallback}</p>`;
+  const template = cvTemplate?.value || "modern";
 
-  const photo = photoContainer;
+  cvPreview.className = `cv-paper template-${template}`;
 
   cvPreview.innerHTML = `
-    <h1>${safe(data.name) || "Your Name"}</h1>
-    <h3>${safe(data.headline) || "Professional title"}</h3>
+    <div class="cv-header">
+      <div>
+        <h1>${escapeHTML(name)}</h1>
+        <h3>${escapeHTML(headline)}</h3>
+        <p>${escapeHTML(location)}</p>
+        <p>${escapeHTML(phone)}</p>
+        <p>${escapeHTML(email)}</p>
+      </div>
+    </div>
 
-    <p class="cv-contact">
-      ${[data.phone, data.email, data.location]
-        .filter(Boolean)
-        .map(safe)
-        .join(" · ")}
-    </p>
+    <section>
+      <h2>Professional Summary</h2>
+      <p>${escapeHTML(summary)}</p>
+    </section>
 
-    <hr>
+    <section>
+      <h2>Work Experience</h2>
+      <p>${escapeHTML(experience)}</p>
+    </section>
 
-    <h4>PROFILE</h4>
-    ${paragraph(data.summary, "Add a professional summary.")}
+    <section>
+      <h2>Skills</h2>
+      <p>${escapeHTML(skills)}</p>
+    </section>
 
-    <h4>WORK EXPERIENCE</h4>
-    ${paragraph(data.experience, "Add your work experience.")}
+    <section>
+      <h2>Education</h2>
+      <p>${escapeHTML(education)}</p>
+    </section>
 
-    <h4>SKILLS</h4>
-    ${paragraph(data.skills, "Add your skills.")}
-
-    <h4>EDUCATION</h4>
-    ${paragraph(data.education, "Add your education.")}
-
-    <h4>LANGUAGES</h4>
-    ${paragraph(data.languages, "Add your languages.")}
+    <section>
+      <h2>Languages</h2>
+      <p>${escapeHTML(languages)}</p>
+    </section>
   `;
 
-  // Keep uploaded photo when preview updates
-  if (photo) {
-    cvPreview.prepend(photo);
+  if (uploadedPhoto) {
+    const image = document.createElement("img");
+    image.src = uploadedPhoto;
+    image.alt = "CV Photo";
+    image.className = "cv-preview-photo";
+    cvPreview.querySelector(".cv-header").prepend(image);
   }
 }
 
-// Update CV when form is submitted
 if (cvForm) {
-  cvForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    updateCV();
-  });
-
   cvForm.addEventListener("input", updateCV);
   cvForm.addEventListener("change", updateCV);
 }
 
-// Change CV template
-if (templateSelect && cvPreview) {
-  templateSelect.addEventListener("change", () => {
-    cvPreview.classList.remove(
-      "template-modern",
-      "template-classic",
-      "template-professional"
-    );
-
-    cvPreview.classList.add(
-      "template-" + templateSelect.value
-    );
-  });
+if (cvTemplate) {
+  cvTemplate.addEventListener("change", updateCV);
 }
 
-// Upload profile photo
-if (photoInput && photoPreview && photoContainer) {
-  photoInput.addEventListener("change", () => {
-    const file = photoInput.files[0];
+if (cvPhoto) {
+  cvPhoto.addEventListener("change", () => {
+    const file = cvPhoto.files?.[0];
 
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file.");
-      photoInput.value = "";
       return;
     }
 
     const reader = new FileReader();
 
-    reader.onload = (event) => {
-      photoPreview.src = event.target.result;
-      photoContainer.hidden = false;
+    reader.onload = () => {
+      uploadedPhoto = reader.result;
+
+      if (cvPhotoPreview) {
+        cvPhotoPreview.src = uploadedPhoto;
+      }
+
+      if (photoContainer) {
+        photoContainer.hidden = false;
+      }
+
+      updateCV();
     };
 
     reader.readAsDataURL(file);
   });
 }
 
-// Remove profile photo
 if (removePhotoButton) {
   removePhotoButton.addEventListener("click", () => {
-    if (photoInput) photoInput.value = "";
-    if (photoPreview) photoPreview.removeAttribute("src");
+    uploadedPhoto = "";
+
+    if (cvPhoto) cvPhoto.value = "";
+    if (cvPhotoPreview) cvPhotoPreview.src = "";
     if (photoContainer) photoContainer.hidden = true;
+
+    updateCV();
   });
 }
 
-// Print / Save PDF
-const printButton = $("#print-cv");
-
-if (printButton) {
-  printButton.addEventListener("click", () => {
+if (printCVButton) {
+  printCVButton.addEventListener("click", () => {
     updateCV();
     window.print();
   });
@@ -139,280 +222,281 @@ if (printButton) {
 
 updateCV();
 
-// ==========================================
-// 2. VOICE TRANSLATOR
-// ==========================================
+
+/* 3. VOICE TRANSLATOR */
 
 const sourceLang = $("#source-lang");
 const targetLang = $("#target-lang");
-const speechInput = $("#speech-input");
-const translationOutput = $("#translation-output");
+const swapLanguages = $("#swap-languages");
+
+const startListening = $("#start-listening");
+const stopListening = $("#stop-listening");
+
 const speechStatus = $("#speech-status");
+const speechInput = $("#speech-input");
 
-const languageNames = {
-  "my": "Burmese",
-  "my-MM": "Burmese",
-  "en": "English",
-  "en-US": "English",
-  "en-GB": "English",
-  "th": "Thai",
-  "th-TH": "Thai",
-  "ru": "Russian",
-  "ru-RU": "Russian",
-  "zh-CN": "Chinese",
-  "ja-JP": "Japanese",
-  "ko-KR": "Korean",
-  "hi-IN": "Hindi",
-  "ne-NP": "Nepali",
-  "fr-FR": "French",
-  "de-DE": "German",
-  "es-ES": "Spanish",
-  "ar-SA": "Arabic"
-};
+const translateButton = $("#translate-text");
+const speakButton = $("#speak-result");
+const copyButton = $("#copy-result");
 
-function languageCode(value) {
-  return String(value || "en").split("-")[0];
-}
+const translationOutput = $("#translation-output");
 
-function setStatus(message) {
+let recognition = null;
+
+function setSpeechStatus(message) {
   if (speechStatus) speechStatus.textContent = message;
 }
 
-// Swap translation languages
-const swapButton = $("#swap-languages");
+if ("SpeechRecognition" in window ||
+    "webkitSpeechRecognition" in window) {
 
-if (swapButton && sourceLang && targetLang) {
-  swapButton.addEventListener("click", () => {
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  recognition = new SpeechRecognition();
+
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+    let transcript = "";
+
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
+      transcript += event.results[i][0].transcript;
+    }
+
+    if (speechInput) {
+      speechInput.value = transcript;
+    }
+  };
+
+  recognition.onstart = () => {
+    setSpeechStatus("Listening...");
+  };
+
+  recognition.onerror = (event) => {
+    setSpeechStatus("Speech error: " + event.error);
+  };
+
+  recognition.onend = () => {
+    setSpeechStatus("Listening stopped.");
+  };
+
+} else {
+  setSpeechStatus(
+    "Speech recognition is not supported by this browser."
+  );
+}
+
+if (startListening) {
+  startListening.addEventListener("click", () => {
+    if (!recognition) {
+      alert("Please use a browser that supports speech recognition.");
+      return;
+    }
+
+    const languageCodes = {
+      en: "en-US",
+      my: "my-MM",
+      th: "th-TH",
+      ru: "ru-RU",
+      zh: "zh-CN",
+      hi: "hi-IN",
+      ne: "ne-NP"
+    };
+
+    recognition.lang =
+      languageCodes[sourceLang?.value] || "en-US";
+
+    recognition.start();
+  });
+}
+
+if (stopListening) {
+  stopListening.addEventListener("click", () => {
+    if (recognition) recognition.stop();
+    setSpeechStatus("Listening stopped.");
+  });
+}
+
+if (swapLanguages) {
+  swapLanguages.addEventListener("click", () => {
+    if (!sourceLang || !targetLang) return;
+
     const oldSource = sourceLang.value;
     sourceLang.value = targetLang.value;
     targetLang.value = oldSource;
   });
 }
 
-// Speech recognition
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+async function translateText() {
+  const text = speechInput?.value.trim();
 
-let recognition = null;
+  if (!text) {
+    alert("Please enter or speak some text first.");
+    return;
+  }
 
-if (SpeechRecognition) {
-  recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  const source = sourceLang?.value || "en";
+  const target = targetLang?.value || "my";
 
-  recognition.onstart = () => {
-    setStatus("Listening...");
-  };
+  if (source === target) {
+    if (translationOutput) {
+      translationOutput.value = text;
+    }
+    return;
+  }
 
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
+  if (translationOutput) {
+    translationOutput.value = "Translating...";
+  }
 
-    if (speechInput) {
-      speechInput.value = transcript;
+  try {
+    const url =
+      "https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(text) +
+      "&langpair=" +
+      encodeURIComponent(source + "|" + target);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Translation service unavailable.");
     }
 
-    setStatus("Speech captured.");
-  };
+    const data = await response.json();
 
-  recognition.onerror = (event) => {
-    setStatus("Microphone error: " + event.error);
-  };
-
-  recognition.onend = () => {
-    if (speechStatus && speechStatus.textContent === "Listening...") {
-      setStatus("Listening stopped.");
+    if (data.responseStatus !== 200) {
+      throw new Error("Translation failed.");
     }
-  };
-} else {
-  setStatus("Speech recognition is not supported by this browser.");
+
+    if (translationOutput) {
+      translationOutput.value =
+        data.responseData.translatedText;
+    }
+
+  } catch (error) {
+    if (translationOutput) {
+      translationOutput.value =
+        "Translation error: " + error.message;
+    }
+  }
 }
-
-// Start listening
-const startButton = $("#start-listening");
-
-if (startButton) {
-  startButton.addEventListener("click", () => {
-    if (!recognition) {
-      alert("Please use a browser that supports speech recognition.");
-      return;
-    }
-
-    recognition.lang = sourceLang?.value || "en-US";
-
-    try {
-      recognition.start();
-    } catch (error) {
-      setStatus("Please try again.");
-    }
-  });
-}
-
-// Stop listening
-const stopButton = $("#stop-listening");
-
-if (stopButton) {
-  stopButton.addEventListener("click", () => {
-    if (recognition) recognition.stop();
-    setStatus("Listening stopped.");
-  });
-}
-
-// Translate text using MyMemory
-const translateButton = $("#translate-text");
 
 if (translateButton) {
-  translateButton.addEventListener("click", async () => {
-    const text = speechInput?.value.trim();
-
-    if (!text) {
-      alert("Please enter or speak some text first.");
-      return;
-    }
-
-    const from = languageCode(sourceLang?.value);
-    const to = languageCode(targetLang?.value);
-
-    if (from === to) {
-      alert("Please select two different languages.");
-      return;
-    }
-
-    translationOutput.textContent = "Translating...";
-    setStatus("Translating...");
-
-    try {
-      const url =
-        "https://api.mymemory.translated.net/get?q=" +
-        encodeURIComponent(text) +
-        "&langpair=" +
-        encodeURIComponent(from + "|" + to);
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error("Translation service unavailable.");
-      }
-
-      const result = await response.json();
-
-      if (result.responseStatus !== 200) {
-        throw new Error(
-          result.responseDetails || "Translation failed."
-        );
-      }
-
-      translationOutput.textContent =
-        result.responseData.translatedText;
-
-      setStatus("Translation complete.");
-    } catch (error) {
-      translationOutput.textContent =
-        "Translation failed. Please try again.";
-
-      setStatus(error.message);
-    }
-  });
+  translateButton.addEventListener("click", translateText);
 }
-
-// Speak translated text
-const speakButton = $("#speak-result");
 
 if (speakButton) {
   speakButton.addEventListener("click", () => {
-    const text = translationOutput?.textContent.trim();
+    const text = translationOutput?.value.trim();
 
-    if (!text || text === "Translating...") return;
-
-    if (!("speechSynthesis" in window)) {
-      alert("Speech output is not supported.");
+    if (!text) {
+      alert("No translated text to speak.");
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = targetLang?.value || "en-US";
+    if (!("speechSynthesis" in window)) {
+      alert("Text-to-speech is not supported.");
+      return;
+    }
 
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+    const languageCodes = {
+      en: "en-US",
+      my: "my-MM",
+      th: "th-TH",
+      ru: "ru-RU",
+      zh: "zh-CN",
+      hi: "hi-IN",
+      ne: "ne-NP"
+    };
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.lang =
+      languageCodes[targetLang?.value] || "en-US";
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
   });
 }
 
-// Copy translated text
-const copyButton = $("#copy-result");
-
 if (copyButton) {
   copyButton.addEventListener("click", async () => {
-    const text = translationOutput?.textContent.trim();
+    const text = translationOutput?.value || "";
 
     if (!text) return;
 
     try {
       await navigator.clipboard.writeText(text);
-      setStatus("Translation copied.");
-    } catch (error) {
-      setStatus("Could not copy text.");
+      alert("Translation copied.");
+    } catch {
+      alert("Could not copy. Please select and copy the text manually.");
     }
   });
 }
 
-// ==========================================
-// 3. THAILAND JOB FINDER
-// ==========================================
+
+/* 4. THAILAND JOB FINDER */
 
 const jobKeyword = $("#job-keyword");
 const jobProvince = $("#job-province");
 const jobLanguage = $("#job-language");
-const searchJobsButton = $("#search-jobs");
+const searchJobs = $("#search-jobs");
 
 function searchThailandJobs(keyword) {
   const province = jobProvince?.value || "Thailand";
-  const language = jobLanguage?.value || "";
 
-  const searchText = [
-    keyword || jobKeyword?.value || "Hotel jobs",
+  const languageValue = jobLanguage?.value || "both";
+
+  const languageText = {
+    both: "Thai English",
+    en: "English",
+    th: "Thai"
+  };
+
+  const language =
+    languageText[languageValue] || "Thai English";
+
+  const query = [
+    keyword,
     province,
     language,
-    "job vacancy"
-  ].filter(Boolean).join(" ");
+    "job vacancy",
+    "hiring"
+  ].join(" ");
 
-  const encoded = encodeURIComponent(searchText);
+  const url =
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(query);
 
-  const urls = [
-    "https://www.google.com/search?q=" + encoded +
-      "+site%3Ajobthai.com",
+  window.open(url, "_blank", "noopener,noreferrer");
+}
 
-    "https://www.google.com/search?q=" + encoded +
-      "+site%3Ajobsdb.com",
+if (searchJobs) {
+  searchJobs.addEventListener("click", () => {
+    const keyword = jobKeyword?.value.trim() || "hotel jobs";
 
-    "https://www.google.com/search?q=" + encoded +
-      "+site%3Aindeed.com",
-
-    "https://www.google.com/search?q=" + encoded +
-      "+site%3Atopgun.co.th",
-
-    "https://www.google.com/search?q=" + encoded
-  ];
-
-  urls.forEach((url) => {
-    window.open(url, "_blank", "noopener");
+    searchThailandJobs(keyword);
   });
 }
 
-// Search button
-if (searchJobsButton) {
-  searchJobsButton.addEventListener("click", () => {
-    searchThailandJobs();
-  });
-}
-
-// Quick keyword buttons
 document.querySelectorAll("[data-keyword]").forEach((button) => {
   button.addEventListener("click", () => {
     const keyword = button.dataset.keyword;
 
-    if (jobKeyword) {
-      jobKeyword.value = keyword;
-    }
+    if (jobKeyword) jobKeyword.value = keyword;
 
     searchThailandJobs(keyword);
   });
 });
+
+
+/* 5. APP READY */
+
+console.log("Alex AI Tools loaded successfully.");
