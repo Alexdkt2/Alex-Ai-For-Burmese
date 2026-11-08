@@ -125,51 +125,233 @@
     </div>
   </section>
 
-  <section class="tool-panel" id="panel-voice" hidden>
-    <div class="panel-intro">
-      <span class="panel-tag">02 · VOICE TRANSLATOR</span>
-      <h3>Let the conversation flow.</h3>
-      <p>Use your device microphone to recognize speech, then translate the text.</p>
-    </div>
-    <div class="translator-card">
-      <div class="language-row">
-        <label>Speak / source language
-          <select id="source-lang">
-            <option value="my-MM">Burmese</option><option value="en-US">English</option>
-            <option value="th-TH">Thai</option><option value="ru-RU">Russian</option>
-            <option value="zh-CN">Chinese</option><option value="hi-IN">Hindi</option>
-            <option value="ne-NP">Nepali</option><option value="ja-JP">Japanese</option>
-            <option value="ko-KR">Korean</option><option value="fr-FR">French</option>
-            <option value="de-DE">German</option><option value="es-ES">Spanish</option>
-          </select>
-        </label>
-        <button class="swap-btn" id="swap-languages" title="Swap languages">⇄</button>
-        <label>Translate into
-          <select id="target-lang">
-            <option value="th">Thai</option><option value="my">Burmese</option>
-            <option value="en">English</option><option value="ru">Russian</option>
-            <option value="zh">Chinese</option><option value="hi">Hindi</option>
-            <option value="ne">Nepali</option><option value="ja">Japanese</option>
-            <option value="ko">Korean</option><option value="fr">French</option>
-            <option value="de">German</option><option value="es">Spanish</option>
-          </select>
-        </label>
+  
+<section class="tool-panel" id="panel-voice" hidden>
+
+  <div class="panel-intro">
+    <span class="panel-tag">02 · ALEX LIVE TRANSLATOR</span>
+    <h3>Speak naturally. Understand instantly.</h3>
+    <p>
+      Two-way voice translation. Speak in your language
+      and let Alex translate the conversation.
+    </p>
+  </div>
+
+  <div class="translator-card">
+
+    <!-- TRANSLATOR HEADER -->
+
+    <div class="translator-heading">
+      <div>
+        <h3>Live Voice Translator</h3>
+        <p class="small-note">Automatic speech translation</p>
       </div>
+      <span class="status-text">FREE</span>
+    </div>
+
+    <!-- LANGUAGE SELECTION -->
+
+    <div class="language-row">
+
+      <label>
+        <span>🎙 Your language</span>
+        <select id="source-lang">
+          <option value="my-MM">🇲🇲 Burmese</option>
+          <option value="en-US">🇺🇸 English</option>
+          <option value="th-TH">🇹🇭 Thai</option>
+          <option value="ru-RU">🇷🇺 Russian</option>
+          <option value="zh-CN">🇨🇳 Chinese</option>
+          <option value="hi-IN">🇮🇳 Hindi</option>
+          <option value="ne-NP">🇳🇵 Nepali</option>
+          <option value="ja-JP">🇯🇵 Japanese</option>
+          <option value="ko-KR">🇰🇷 Korean</option>
+          <option value="fr-FR">🇫🇷 French</option>
+          <option value="de-DE">🇩🇪 German</option>
+          <option value="es-ES">🇪🇸 Spanish</option>
+        </select>
+      </label>
+
+      <button
+        class="swap-btn"
+        id="swap-languages"
+        type="button"
+        title="Swap languages"
+        aria-label="Swap languages"
+      >⇄</button>
+
+      <label>
+        <span>🌐 Translate into</span>
+        <select id="target-lang">
+          <option value="th">🇹🇭 Thai</option>
+          <option value="my">🇲🇲 Burmese</option>
+          <option value="en">🇺🇸 English</option>
+          <option value="ru">🇷🇺 Russian</option>
+          <option value="zh">🇨🇳 Chinese</option>
+          <option value="hi">🇮🇳 Hindi</option>
+          <option value="ne">🇳🇵 Nepali</option>
+          <option value="ja">🇯🇵 Japanese</option>
+          <option value="ko">🇰🇷 Korean</option>
+          <option value="fr">🇫🇷 French</option>
+          <option value="de">🇩🇪 German</option>
+          <option value="es">🇪🇸 Spanish</option>
+        </select>
+      </label>
+
+    </div>
+
+    <!-- AUTOMATIC CONVERSATION -->
+
+    <div class="conversation-mode">
+
+      <div class="mode-information">
+        <span class="mode-icon">🎧</span>
+        <div>
+          <strong>Automatic Conversation</strong>
+          <p class="small-note">
+            Speak, translate and hear the result automatically.
+          </p>
+        </div>
+      </div>
+
       <div class="speech-controls">
-        <button class="btn btn-primary" id="start-listening">🎙 Start speaking</button>
-        <button class="btn btn-ghost" id="stop-listening" disabled>Stop</button>
-        <span id="speech-status" class="status-text">Microphone is ready when supported by your browser.</span>
+
+        <button
+          class="btn btn-primary"
+          id="start-listening"
+          type="button"
+        >
+          🎙 Start conversation
+        </button>
+
+        <button
+          class="btn btn-ghost"
+          id="stop-listening"
+          type="button"
+          disabled
+        >
+          ■ Stop
+        </button>
+
       </div>
-      <label>Recognized speech<textarea id="speech-input" rows="4" placeholder="Your spoken words will appear here."></textarea></label>
-      <div class="button-row">
-        <button class="btn btn-primary" id="translate-text">Translate text</button>
-        <button class="btn btn-ghost" id="speak-result">🔊 Read translation</button>
-        <button class="btn btn-ghost" id="copy-result">Copy</button>
+
+      <div class="live-status">
+        <span class="status-dot"></span>
+        <span id="speech-status">
+          Ready. Select languages and start speaking.
+        </span>
       </div>
-      <label>Translation<textarea id="translation-output" rows="4" readonly placeholder="Your translation will appear here."></textarea></label>
-      <p class="small-note">Speech recognition depends on browser and device support. Translation uses MyMemory. Avoid entering confidential information.</p>
+
     </div>
-  </section>
+
+    <!-- SOURCE SPEECH -->
+
+    <div class="translation-section">
+
+      <div class="section-heading">
+        <span>🎤 Recognized Speech</span>
+        <span class="small-note">Your words</span>
+      </div>
+
+      <label>
+        <textarea
+          id="speech-input"
+          rows="5"
+          placeholder="Your spoken words will appear here..."
+        ></textarea>
+      </label>
+
+    </div>
+
+    <!-- TRANSLATION -->
+
+    <div class="translation-section">
+
+      <div class="section-heading">
+        <span>🌐 Translation</span>
+        <span class="small-note">Translated result</span>
+      </div>
+
+      <label>
+        <textarea
+          id="translation-output"
+          rows="5"
+          readonly
+          placeholder="Your translation will appear here..."
+        ></textarea>
+      </label>
+
+    </div>
+
+    <!-- MANUAL CONTROLS -->
+
+    <div class="button-row">
+
+      <button
+        class="btn btn-primary"
+        id="translate-text"
+        type="button"
+      >
+        Translate Text
+      </button>
+
+      <button
+        class="btn btn-ghost"
+        id="speak-result"
+        type="button"
+      >
+        🔊 Play Voice
+      </button>
+
+      <button
+        class="btn btn-ghost"
+        id="copy-result"
+        type="button"
+      >
+        📋 Copy
+      </button>
+
+    </div>
+
+    <!-- HOW IT WORKS -->
+
+    <div class="translator-info">
+
+      <h4>How Alex Translator Works</h4>
+
+      <div class="translator-step">
+        <span>01</span>
+        <p>Select your speaking language.</p>
+      </div>
+
+      <div class="translator-step">
+        <span>02</span>
+        <p>Select the language you want to hear.</p>
+      </div>
+
+      <div class="translator-step">
+        <span>03</span>
+        <p>Press Start Conversation and speak.</p>
+      </div>
+
+      <div class="translator-step">
+        <span>04</span>
+        <p>Alex translates your speech and reads the result aloud.</p>
+      </div>
+
+    </div>
+
+    <p class="small-note">
+      Free version uses browser speech recognition, browser
+      text-to-speech and MyMemory translation service.
+      Internet connection and microphone permission are required.
+      Speech recognition and translation availability depend
+      on browser and service support. Avoid confidential information.
+    </p>
+
+  </div>
+
+</section>
+
 
   <section class="tool-panel" id="panel-jobs" hidden>
     <div class="panel-intro">
