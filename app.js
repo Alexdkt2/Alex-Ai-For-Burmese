@@ -1,6 +1,6 @@
 
 /* =========================================
-   ALEX AI TOOLS — FREE VERSION 1.0
+   ALEX AI TOOLS — FREE VERSION 1.1
    COMPLETE APP.JS
    ========================================= */
 
@@ -27,8 +27,14 @@ function openTool(name) {
     if (panel.element) panel.element.hidden = true;
   });
 
+  if (!selected.element) return;
+
   selected.element.hidden = false;
-  workspaceTitle.textContent = selected.title;
+
+  if (workspaceTitle) {
+    workspaceTitle.textContent = selected.title;
+  }
+
   workspace.hidden = false;
 
   workspace.scrollIntoView({
@@ -40,14 +46,18 @@ function openTool(name) {
 }
 
 document.querySelectorAll("[data-open]").forEach((button) => {
-  button.addEventListener("click", () => openTool(button.dataset.open));
+  button.addEventListener("click", () => {
+    openTool(button.dataset.open);
+  });
 });
 
 $("#close-workspace")?.addEventListener("click", () => {
   workspace.hidden = true;
+
   Object.values(toolPanels).forEach((panel) => {
     if (panel.element) panel.element.hidden = true;
   });
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
@@ -116,6 +126,7 @@ function updateCV() {
         <p>${escapeHTML(email)}</p>
       </div>
     </div>
+
     ${sections.map(([title, content]) => `
       <section>
         <h2>${title}</h2>
@@ -135,6 +146,7 @@ cvPhoto?.addEventListener("change", () => {
 
   if (!file.type.startsWith("image/")) {
     alert("Please select an image.");
+    cvPhoto.value = "";
     return;
   }
 
@@ -156,7 +168,9 @@ cvPhoto?.addEventListener("change", () => {
 
 removePhotoButton?.addEventListener("click", () => {
   uploadedPhoto = "";
+
   if (cvPhoto) cvPhoto.value = "";
+
   updateCV();
 });
 
@@ -174,7 +188,7 @@ updateCV();
 
 
 /* =========================================
-   3. TWO-WAY AUTOMATIC VOICE TRANSLATOR
+   3. VOICE TRANSLATOR
    ========================================= */
 
 const sourceLang = $("#source-lang");
@@ -223,15 +237,23 @@ const speechVoiceMap = {
 };
 
 let recognition = null;
-let listening = false;
 let autoMode = false;
+let recognitionActive = false;
+let recognitionStarting = false;
 let processing = false;
-let translationTimer = null;
-let lastTranslatedText = "";
-let speechSession = 0;
+let speaking = false;
+let restartTimer = null;
+let currentTranscript = "";
+let translationRequestId = 0;
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
 
 function setSpeechStatus(message) {
-  if (speechStatus) speechStatus.textContent = message;
+  if (speechStatus) {
+    speechStatus.textContent = message;
+  }
 }
 
 function getSourceCode() {
@@ -242,24 +264,126 @@ function getTargetCode() {
   return targetLang?.value || "th";
 }
 
+function updateVoiceButtons() {
+  if (startListening) {
+    startListening.disabled = autoMode;
+  }
+
+  if (stopListening) {
+    stopListening.disabled = !autoMode;
+  }
+}
+
+function stopRecognition() {
+  clearTimeout(restartTimer);
+
+  if (!recognition) return;
+
+  try {
+    recognition.stop();
+  } catch (error) {
+    // Recognition may already be stopped.
+  }
+}
+
+function startRecognition() {
+  if (!autoMode || !recognition || processing || speaking) {
+    return;
+  }
+
+  if (recognitionActive || recognitionStarting) {
+    return;
+  }
+
+  recognition.lang = sourceLang.value;
+  recognitionStarting = true;
+
+  try {
+    recognition.start();
+  } catch (error) {
+    recognitionStarting = false;
+
+    restartTimer = setTimeout(() => {
+      if (autoMode && !processing && !speaking) {
+        startRecognition();
+      }
+    }, 800);
+  }
+}
+
 function speakTranslation(text) {
-  if (!text || !("speechSynthesis" in window)) return;
+  return new Promise((resolve) => {
+    if (!text || !("speechSynthesis" in window)) {
+      resolve();
+      return;
+    }
 
-  speechSynthesis.cancel();
+    speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = speechVoiceMap[getTargetCode()] || "en-US";
-  utterance.rate = 0.95;
-  utterance.pitch = 1;
+    const utterance = new SpeechSynthesisUtterance(text);
 
-  speechSynthesis.speak(utterance);
+    utterance.lang =
+      speechVoiceMap[getTargetCode()] || "en-US";
+
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => {
+      speaking = true;
+      setSpeechStatus("🔊 Speaking translation...");
+    };
+
+    utterance.onend = () => {
+      speaking = false;
+      resolve();
+    };
+
+    utterance.onerror = () => {
+      speaking = false;
+      resolve();
+    };
+
+    speechSynthesis.speak(utterance);
+  });
+}
+
+async function requestTranslation(text, source, target) {
+  const url =
+    "https://api.mymemory.translated.net/get?q=" +
+    encodeURIComponent(text) +
+    "&langpair=" +
+    encodeURIComponent(source + "|" + target);
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Translation service unavailable.");
+  }
+
+  const data = await response.json();
+
+  if (data.responseStatus !== 200) {
+    throw new Error(
+      data.responseDetails || "Translation failed."
+    );
+  }
+
+  const result = data.responseData?.translatedText;
+
+  if (!result) {
+    throw new Error("No translation returned.");
+  }
+
+  return result;
 }
 
 async function translateText(autoSpeak = false) {
   const text = speechInput?.value.trim();
 
   if (!text) {
-    if (!autoSpeak) alert("Please speak or enter some text.");
+    if (!autoSpeak) {
+      alert("Please enter or speak some text.");
+    }
     return;
   }
 
@@ -270,230 +394,324 @@ async function translateText(autoSpeak = false) {
 
   if (source === target) {
     translationOutput.value = text;
-    if (autoSpeak) speakTranslation(text);
+
+    if (autoSpeak) {
+      await speakTranslation(text);
+    }
+
     return;
   }
 
+  const requestId = ++translationRequestId;
+
   processing = true;
-  if (translateButton) translateButton.disabled = true;
+
+  if (translateButton) {
+    translateButton.disabled = true;
+  }
 
   translationOutput.value = "Translating...";
 
+  if (autoSpeak) {
+    stopRecognition();
+    setSpeechStatus("Translating your speech...");
+  }
+
   try {
-    const url =
-      "https://api.mymemory.translated.net/get?q=" +
-      encodeURIComponent(text) +
-      "&langpair=" +
-      encodeURIComponent(source + "|" + target);
-
-    const response = await fetch(url);
-
-    if (!response.ok) throw new Error("Translation service unavailable.");
-
-    const data = await response.json();
-
-    if (data.responseStatus !== 200) {
-      throw new Error("Translation failed. Please try again.");
-    }
-
-    const result = data.responseData?.translatedText;
-
-    if (!result) throw new Error("No translation returned.");
-
-    translationOutput.value = result;
-    lastTranslatedText = text;
-
-    if (autoSpeak && autoMode && listening) {
-      speakTranslation(result);
-    }
-
-    setSpeechStatus(
-      autoMode ? "Translation complete. Continue speaking..." : "Translation complete."
+    const result = await requestTranslation(
+      text,
+      source,
+      target
     );
 
+    if (requestId !== translationRequestId) return;
+
+    translationOutput.value = result;
+
+    if (autoSpeak && autoMode) {
+      await speakTranslation(result);
+    }
+
+    if (autoMode) {
+      setSpeechStatus("Translation complete. Listening again...");
+    } else {
+      setSpeechStatus("Translation complete.");
+    }
+
   } catch (error) {
-    translationOutput.value = "Translation error: " + error.message;
-    setSpeechStatus("Translation failed. Check your internet connection.");
+    translationOutput.value =
+      "Translation error: " + error.message;
+
+    setSpeechStatus(
+      "Translation failed. Check your internet connection."
+    );
+
   } finally {
     processing = false;
-    if (translateButton) translateButton.disabled = false;
+
+    if (translateButton) {
+      translateButton.disabled = false;
+    }
+
+    if (autoMode && !speaking) {
+      restartTimer = setTimeout(startRecognition, 500);
+    }
   }
 }
 
 
-/* Speech recognition */
-
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+/* =========================================
+   SPEECH RECOGNITION
+   ========================================= */
 
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
 
-  recognition.continuous = true;
+  // One speech turn at a time.
+  // This helps prevent the microphone from hearing
+  // the translated voice coming from the speaker.
+
+  recognition.continuous = false;
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
 
   recognition.onstart = () => {
-    listening = true;
-
-    if (startListening) startListening.disabled = true;
-    if (stopListening) stopListening.disabled = false;
+    recognitionActive = true;
+    recognitionStarting = false;
 
     setSpeechStatus("🎙 Listening... Speak now.");
   };
 
   recognition.onresult = (event) => {
     let finalText = "";
+    let interimText = "";
 
-    for (let i = 0; i < event.results.length; i++) {
-      if (event.results[i].isFinal) {
-        finalText += event.results[i][0].transcript + " ";
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
+      const result = event.results[i];
+      const transcript = result[0].transcript;
+
+      if (result.isFinal) {
+        finalText += transcript + " ";
+      } else {
+        interimText += transcript;
       }
     }
 
+    if (speechInput && interimText) {
+      speechInput.value =
+        (speechInput.value || "") + interimText;
+    }
+
     if (finalText.trim()) {
-      speechInput.value = finalText.trim();
+      currentTranscript = finalText.trim();
 
-      if (autoMode) {
-        clearTimeout(translationTimer);
-
-        translationTimer = setTimeout(() => {
-          if (!processing && listening) {
-            translateText(true);
-          }
-        }, 1000);
+      if (speechInput) {
+        speechInput.value = currentTranscript;
       }
+
+      setSpeechStatus("Speech detected. Preparing translation...");
     }
   };
 
   recognition.onerror = (event) => {
-    setSpeechStatus("Microphone: " + event.error);
+    recognitionStarting = false;
 
-    if (event.error === "not-allowed" ||
-        event.error === "service-not-allowed") {
+    if (
+      event.error === "not-allowed" ||
+      event.error === "service-not-allowed"
+    ) {
+      setSpeechStatus("Microphone permission denied.");
       stopAutomaticMode();
-      alert("Please allow microphone access in your browser.");
+
+      alert(
+        "Please allow microphone access in your browser settings."
+      );
+
+      return;
+    }
+
+    if (event.error === "no-speech") {
+      setSpeechStatus("No speech detected. Listening again...");
+    } else if (event.error !== "aborted") {
+      setSpeechStatus("Microphone error: " + event.error);
     }
   };
 
   recognition.onend = () => {
-    if (listening && autoMode) {
-      try {
-        recognition.start();
-      } catch (error) {
-        setSpeechStatus("Restarting microphone...");
+    recognitionActive = false;
+    recognitionStarting = false;
+
+    const transcript = currentTranscript.trim();
+    currentTranscript = "";
+
+    if (!autoMode) {
+      updateVoiceButtons();
+      return;
+    }
+
+    if (transcript && !processing) {
+      if (speechInput) {
+        speechInput.value = transcript;
       }
-    } else {
-      if (startListening) startListening.disabled = false;
-      if (stopListening) stopListening.disabled = true;
-      setSpeechStatus("Listening stopped.");
+
+      translateText(true);
+      return;
+    }
+
+    if (!processing && !speaking) {
+      restartTimer = setTimeout(startRecognition, 400);
     }
   };
 
 } else {
   setSpeechStatus(
-    "Speech recognition is not supported. Try Chrome on Android."
+    "Speech recognition unavailable. Try Google Chrome on Android."
   );
+
+  if (startListening) {
+    startListening.disabled = true;
+  }
 }
+
+
+/* =========================================
+   START / STOP AUTOMATIC MODE
+   ========================================= */
 
 function startAutomaticMode() {
   if (!recognition) {
-    alert("Use Google Chrome on Android with microphone permission.");
+    alert(
+      "Please use Google Chrome on Android and allow microphone access."
+    );
     return;
   }
+
+  if (!sourceLang || !targetLang) return;
 
   if (getSourceCode() === getTargetCode()) {
     alert("Please select two different languages.");
     return;
   }
 
+  if (autoMode) return;
+
   autoMode = true;
-  listening = true;
-  speechSession++;
+  processing = false;
+  speaking = false;
+  currentTranscript = "";
 
   speechInput.value = "";
   translationOutput.value = "";
-  lastTranslatedText = "";
 
-  recognition.lang = sourceLang.value;
+  updateVoiceButtons();
 
   setSpeechStatus("Starting automatic conversation...");
 
-  try {
-    recognition.start();
-  } catch (error) {
-    listening = false;
-    autoMode = false;
-    setSpeechStatus("Could not start microphone. Try again.");
-  }
+  startRecognition();
 }
 
 function stopAutomaticMode() {
   autoMode = false;
-  listening = false;
+  processing = false;
+  speaking = false;
+  currentTranscript = "";
 
-  clearTimeout(translationTimer);
+  translationRequestId++;
 
-  if (recognition) {
-    try {
-      recognition.stop();
-    } catch (error) {
-      // Already stopped.
-    }
-  }
+  clearTimeout(restartTimer);
+
+  stopRecognition();
 
   if ("speechSynthesis" in window) {
     speechSynthesis.cancel();
   }
 
-  if (startListening) startListening.disabled = false;
-  if (stopListening) stopListening.disabled = true;
+  recognitionStarting = false;
+
+  updateVoiceButtons();
 
   setSpeechStatus("Conversation stopped.");
 }
 
-startListening?.addEventListener("click", startAutomaticMode);
-stopListening?.addEventListener("click", stopAutomaticMode);
+startListening?.addEventListener(
+  "click",
+  startAutomaticMode
+);
+
+stopListening?.addEventListener(
+  "click",
+  stopAutomaticMode
+);
+
+
+/* =========================================
+   MANUAL TRANSLATION
+   ========================================= */
 
 translateButton?.addEventListener("click", () => {
   translateText(false);
 });
 
 speakButton?.addEventListener("click", () => {
-  speakTranslation(translationOutput?.value.trim());
+  const text = translationOutput?.value.trim();
+
+  if (!text || text === "Translating...") return;
+
+  speakTranslation(text);
 });
 
 swapLanguages?.addEventListener("click", () => {
   if (!sourceLang || !targetLang) return;
 
+  if (autoMode) {
+    stopAutomaticMode();
+  }
+
   const oldSource = sourceLang.value;
   const oldTarget = targetLang.value;
 
-  sourceLang.value = speechVoiceMap[targetLang.value] || "en-US";
-  targetLang.value = languageMap[oldSource] || "en";
+  sourceLang.value =
+    speechVoiceMap[oldTarget] || "en-US";
 
-  if (listening) {
-    stopAutomaticMode();
-    setSpeechStatus("Languages changed. Press Start speaking.");
-  }
+  targetLang.value =
+    languageMap[oldSource] || "en";
+
+  if (speechInput) speechInput.value = "";
+  if (translationOutput) translationOutput.value = "";
+
+  setSpeechStatus(
+    "Languages swapped. Press Start to begin."
+  );
 });
 
 [sourceLang, targetLang].forEach((select) => {
   select?.addEventListener("change", () => {
-    if (listening) stopAutomaticMode();
+    if (autoMode) {
+      stopAutomaticMode();
+    }
   });
 });
 
+
+/* =========================================
+   COPY TRANSLATION
+   ========================================= */
+
 copyButton?.addEventListener("click", async () => {
   const text = translationOutput?.value || "";
-  if (!text) return;
+
+  if (!text || text === "Translating...") return;
 
   try {
     await navigator.clipboard.writeText(text);
     alert("Translation copied.");
-  } catch {
+  } catch (error) {
     translationOutput.select();
-    alert("Select and copy the translation manually.");
+    alert("Please select and copy the translation manually.");
   }
 });
 
@@ -509,7 +727,6 @@ const searchJobs = $("#search-jobs");
 
 function searchThailandJobs(keyword) {
   const province = jobProvince?.value || "Thailand";
-
   const languageValue = jobLanguage?.value || "both";
 
   const languageText = {
@@ -526,20 +743,27 @@ function searchThailandJobs(keyword) {
   ].join(" ");
 
   window.open(
-    "https://www.google.com/search?q=" + encodeURIComponent(query),
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(query),
     "_blank",
     "noopener,noreferrer"
   );
 }
 
 searchJobs?.addEventListener("click", () => {
-  searchThailandJobs(jobKeyword?.value.trim() || "hotel jobs");
+  searchThailandJobs(
+    jobKeyword?.value.trim() || "hotel jobs"
+  );
 });
 
 document.querySelectorAll("[data-keyword]").forEach((button) => {
   button.addEventListener("click", () => {
     const keyword = button.dataset.keyword;
-    if (jobKeyword) jobKeyword.value = keyword;
+
+    if (jobKeyword) {
+      jobKeyword.value = keyword;
+    }
+
     searchThailandJobs(keyword);
   });
 });
@@ -549,4 +773,7 @@ document.querySelectorAll("[data-keyword]").forEach((button) => {
    5. APP READY
    ========================================= */
 
-console.log("Alex AI Tools Free Version 1.0 loaded.");
+updateCV();
+updateVoiceButtons();
+
+console.log("Alex AI Tools Free Version 1.1 loaded.");
