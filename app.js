@@ -322,10 +322,31 @@ function speakTranslation(text) {
 
     const utterance = new SpeechSynthesisUtterance(text);
 
-    utterance.lang =
-      speechVoiceMap[getTargetCode()] || "en-US";
+    const targetCode = getTargetCode();
+    const voiceMap = {
+      th: "th-TH",
+      my: "my-MM",
+      en: "en-US",
+      ru: "ru-RU",
+      zh: "zh-CN",
+      ja: "ja-JP",
+      ko: "ko-KR"
+    };
 
-    utterance.rate = 0.95;
+    utterance.lang =
+      voiceMap[targetCode] || speechVoiceMap[targetCode] || "en-US";
+
+    const voices = speechSynthesis.getVoices();
+
+    const selectedVoice = voices.find(voice =>
+      voice.lang.toLowerCase() === utterance.lang.toLowerCase()
+    );
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+
+    utterance.rate = 0.9;
     utterance.pitch = 1;
 
     utterance.onstart = () => {
@@ -340,12 +361,15 @@ function speakTranslation(text) {
 
     utterance.onerror = () => {
       speaking = false;
+      setSpeechStatus("Voice playback error");
       resolve();
     };
 
     speechSynthesis.speak(utterance);
   });
 }
+
+
 
 async function requestTranslation(text, source, target) {
   const url =
