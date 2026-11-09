@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "Alex AI Tools",
+  "short_name": "Alex AI",
+  "description": "Free translation, voice, CV and Thailand job helper tools.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101827",
+  "theme_color": "#101827",
+  "lang": "en",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
