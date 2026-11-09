@@ -59,21 +59,22 @@ function showTool(name) {
 
 async function translate(text, source, target) {
   if (!text.trim()) throw new Error("Please enter text.");
-
-  const url = new URL("https://api.mymemory.translated.net/get");
-  url.searchParams.set("q", text);
-  url.searchParams.set("langpair", source + "|" + target);
-
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Translation service unavailable.");
-
-  const data = await response.json();
-
-  if (data.responseStatus !== 200) {
-    throw new Error(data.responseDetails || "Translation failed.");
+  if (text.length > 8000) {
+    throw new Error("Please keep each translation under 8,000 characters.");
   }
 
-  return data.responseData.translatedText;
+  const response = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, source, target })
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "AI translation service unavailable.");
+  }
+  if (!data.translation) throw new Error("AI returned an empty translation.");
+  return data.translation;
 }
 
 async function translateText() {
