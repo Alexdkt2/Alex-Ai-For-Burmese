@@ -1,0 +1,12 @@
+{
+  "appId": "com.alexdkt2.alexaiforburmese",
+  "appName": "Alex AI For Burmese",
+  "webDir": "www",
+  "server": {
+    "url": "https://alex-ai-for-burmese.pages.dev",
+    "cleartext": false,
+    "allowNavigation": [
+      "alex-ai-for-burmese.pages.dev"
+    ]
+  }
+}
