@@ -1,6 +1,6 @@
 
 /* =========================================
-   ALEX AI TOOLS — FREE VERSION 1.1
+   ALEX AI TOOLS — FREE VERSION 1.2
    COMPLETE APP.JS
    ========================================= */
 
@@ -168,9 +168,7 @@ cvPhoto?.addEventListener("change", () => {
 
 removePhotoButton?.addEventListener("click", () => {
   uploadedPhoto = "";
-
   if (cvPhoto) cvPhoto.value = "";
-
   updateCV();
 });
 
@@ -260,8 +258,9 @@ function getSourceCode() {
   return languageMap[sourceLang?.value] || "my";
 }
 
+/* Always return the short target code */
 function getTargetCode() {
-  return targetLang?.value || "th";
+  return languageMap[targetLang?.value] || "th";
 }
 
 function updateVoiceButtons() {
@@ -282,94 +281,169 @@ function stopRecognition() {
   try {
     recognition.stop();
   } catch (error) {
-    // Recognition may already be stopped.
+    // Already stopped.
   }
 }
 
-function startRecognition() {
-  if (!autoMode || !recognition || processing || speaking) {
-    return;
+/* =========================================
+   MULTILINGUAL TEXT TO SPEECH
+   ========================================= */
+
+let voiceLoadPromise = null;
+
+function loadSpeechVoices() {
+  if (!("speechSynthesis" in window)) {
+    return Promise.resolve([]);
   }
 
-  if (recognitionActive || recognitionStarting) {
-    return;
+  const available = speechSynthesis.getVoices();
+
+  if (available.length) {
+    return Promise.resolve(available);
   }
 
-  recognition.lang = sourceLang.value;
-  recognitionStarting = true;
+  if (voiceLoadPromise) return voiceLoadPromise;
 
-  try {
-    recognition.start();
-  } catch (error) {
-    recognitionStarting = false;
+  voiceLoadPromise = new Promise((resolve) => {
+    let finished = false;
 
-    restartTimer = setTimeout(() => {
-      if (autoMode && !processing && !speaking) {
-        startRecognition();
-      }
-    }, 800);
-  }
-}
+    const finish = () => {
+      if (finished) return;
+      finished = true;
 
-function speakTranslation(text) {
-  return new Promise((resolve) => {
-    if (!text || !("speechSynthesis" in window)) {
-      resolve();
-      return;
-    }
+      speechSynthesis.removeEventListener(
+        "voiceschanged",
+        onVoicesChanged
+      );
 
-    speechSynthesis.cancel();
+      clearTimeout(timeout);
+      voiceLoadPromise = null;
 
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    const targetCode = getTargetCode();
-    const voiceMap = {
-      th: "th-TH",
-      my: "my-MM",
-      en: "en-US",
-      ru: "ru-RU",
-      zh: "zh-CN",
-      ja: "ja-JP",
-      ko: "ko-KR"
+      resolve(speechSynthesis.getVoices());
     };
 
-    utterance.lang =
-      voiceMap[targetCode] || speechVoiceMap[targetCode] || "en-US";
+    const onVoicesChanged = () => {
+      if (speechSynthesis.getVoices().length) {
+        finish();
+      }
+    };
 
-    const voices = speechSynthesis.getVoices();
+    const timeout = setTimeout(finish, 2500);
 
-    const selectedVoice = voices.find(voice =>
-      voice.lang.toLowerCase() === utterance.lang.toLowerCase()
+    speechSynthesis.addEventListener(
+      "voiceschanged",
+      onVoicesChanged
+    );
+  });
+
+  return voiceLoadPromise;
+}
+
+function findLanguageVoice(voices, locale) {
+  const requested = locale.toLowerCase();
+
+  // Exact locale match first
+  let voice = voices.find((item) =>
+    item.lang.toLowerCase().replace("_", "-") === requested
+  );
+
+  if (voice) return voice;
+
+  // Same language only, never another language
+  const baseLanguage = requested.split("-")[0];
+
+  voice = voices.find((item) =>
+    item.lang.toLowerCase().replace("_", "-").split("-")[0]
+      === baseLanguage
+  );
+
+  return voice || null;
+}
+
+async function speakTranslation(text) {
+  if (!text || !("speechSynthesis" in window)) {
+    setSpeechStatus("Text-to-speech is not supported.");
+    return false;
+  }
+
+  speechSynthesis.cancel();
+
+  const targetCode = getTargetCode();
+  const targetLocale = speechVoiceMap[targetCode];
+
+  if (!targetLocale) {
+    setSpeechStatus("Unsupported voice language.");
+    return false;
+  }
+
+  setSpeechStatus("Loading " + targetLocale + " voice...");
+
+  const voices = await loadSpeechVoices();
+
+  // Check language again in case selection changed
+  if (targetCode !== getTargetCode()) {
+    return false;
+  }
+
+  const selectedVoice = findLanguageVoice(
+    voices,
+    targetLocale
+  );
+
+  if (!selectedVoice) {
+    speaking = false;
+
+    setSpeechStatus(
+      targetCode === "my"
+        ? "Burmese voice unavailable. Install a Burmese TTS voice on Android."
+        : "Voice unavailable: " + targetLocale
     );
 
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
+    return false;
+  }
 
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  utterance.lang = selectedVoice.lang;
+  utterance.voice = selectedVoice;
+  utterance.rate = targetCode === "my" ? 0.85 : 0.9;
+  utterance.pitch = 1;
+
+  return new Promise((resolve) => {
+    let completed = false;
+
+    const finish = (success) => {
+      if (completed) return;
+      completed = true;
+      speaking = false;
+      resolve(success);
+    };
 
     utterance.onstart = () => {
       speaking = true;
-      setSpeechStatus("🔊 Speaking translation...");
+      setSpeechStatus("🔊 Speaking in " + targetLocale);
     };
 
     utterance.onend = () => {
-      speaking = false;
-      resolve();
+      setSpeechStatus("Voice playback complete.");
+      finish(true);
     };
 
-    utterance.onerror = () => {
-      speaking = false;
-      setSpeechStatus("Voice playback error");
-      resolve();
+    utterance.onerror = (event) => {
+      setSpeechStatus(
+        "Voice playback error: " + event.error
+      );
+      finish(false);
     };
 
+    speaking = true;
     speechSynthesis.speak(utterance);
   });
 }
 
-
+/* =========================================
+   TRANSLATION API
+   ========================================= */
 
 async function requestTranslation(text, source, target) {
   const url =
@@ -457,7 +531,7 @@ async function translateText(autoSpeak = false) {
     }
 
     if (autoMode) {
-      setSpeechStatus("Translation complete. Listening again...");
+      setSpeechStatus("Translation complete.");
     } else {
       setSpeechStatus("Translation complete.");
     }
@@ -478,7 +552,7 @@ async function translateText(autoSpeak = false) {
     }
 
     if (autoMode && !speaking) {
-      restartTimer = setTimeout(startRecognition, 500);
+      restartTimer = setTimeout(startRecognition, 700);
     }
   }
 }
@@ -490,10 +564,6 @@ async function translateText(autoSpeak = false) {
 
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
-
-  // One speech turn at a time.
-  // This helps prevent the microphone from hearing
-  // the translated voice coming from the speaker.
 
   recognition.continuous = false;
   recognition.interimResults = true;
@@ -526,8 +596,7 @@ if (SpeechRecognition) {
     }
 
     if (speechInput && interimText) {
-      speechInput.value =
-        (speechInput.value || "") + interimText;
+      speechInput.value = interimText;
     }
 
     if (finalText.trim()) {
@@ -605,6 +674,31 @@ if (SpeechRecognition) {
 /* =========================================
    START / STOP AUTOMATIC MODE
    ========================================= */
+
+function startRecognition() {
+  if (!autoMode || !recognition || processing || speaking) {
+    return;
+  }
+
+  if (recognitionActive || recognitionStarting) {
+    return;
+  }
+
+  recognition.lang = sourceLang.value;
+  recognitionStarting = true;
+
+  try {
+    recognition.start();
+  } catch (error) {
+    recognitionStarting = false;
+
+    restartTimer = setTimeout(() => {
+      if (autoMode && !processing && !speaking) {
+        startRecognition();
+      }
+    }, 800);
+  }
+}
 
 function startAutomaticMode() {
   if (!recognition) {
@@ -688,6 +782,11 @@ speakButton?.addEventListener("click", () => {
   speakTranslation(text);
 });
 
+
+/* =========================================
+   SWAP LANGUAGES
+   ========================================= */
+
 swapLanguages?.addEventListener("click", () => {
   if (!sourceLang || !targetLang) return;
 
@@ -698,11 +797,8 @@ swapLanguages?.addEventListener("click", () => {
   const oldSource = sourceLang.value;
   const oldTarget = targetLang.value;
 
-  sourceLang.value =
-    speechVoiceMap[oldTarget] || "en-US";
-
-  targetLang.value =
-    languageMap[oldSource] || "en";
+  sourceLang.value = oldTarget;
+  targetLang.value = oldSource;
 
   if (speechInput) speechInput.value = "";
   if (translationOutput) translationOutput.value = "";
@@ -800,4 +896,18 @@ document.querySelectorAll("[data-keyword]").forEach((button) => {
 updateCV();
 updateVoiceButtons();
 
-console.log("Alex AI Tools Free Version 1.1 loaded.");
+if ("speechSynthesis" in window) {
+  speechSynthesis.getVoices();
+
+  speechSynthesis.addEventListener(
+    "voiceschanged",
+    () => {
+      console.log(
+        "Available speech voices:",
+        speechSynthesis.getVoices().map(v => v.lang)
+      );
+    }
+  );
+}
+
+console.log("Alex AI Tools Free Version 1.2 loaded.");
