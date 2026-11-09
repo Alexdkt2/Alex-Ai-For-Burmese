@@ -38,6 +38,10 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Use alternate Gradle download host
+        working-directory: android
+        run: sed -i 's#https\\://services.gradle.org/distributions/gradle-8.11.1-all.zip#https\\://downloads.gradle.org/distributions/gradle-8.11.1-bin.zip#' gradle/wrapper/gradle-wrapper.properties
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug
