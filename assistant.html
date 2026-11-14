@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Alex's Gurd — personal work assistant for job search, applications, CVs and work planning.">
+  <title>Alex's Gurd — Personal Work Assistant</title>
+  <link rel="stylesheet" href="assistant.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Back to Alex AI Tools">ALEX <span>AI</span></a>
+    <span class="top-label">PERSONAL WORK ASSISTANT</span>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <div class="eyebrow">YOUR WORK PARTNER</div>
+      <h1>Alex's Gurd</h1>
+      <p>Plan your next step, prepare job applications, improve your CV and practise interviews — by text or voice.</p>
+      <div class="status"><span class="status-dot"></span><span id="connectionStatus">Checking assistant connection…</span></div>
+    </section>
+
+    <section class="workspace">
+      <aside class="side-card">
+        <div class="assistant-mark" aria-hidden="true">G</div>
+        <h2>Alex's Gurd</h2>
+        <p class="muted">Personal work assistant</p>
+        <label for="replyLanguage">Reply language</label>
+        <select id="replyLanguage">
+          <option value="my">Burmese</option>
+          <option value="en">English</option>
+          <option value="th">Thai</option>
+          <option value="auto">Match my message</option>
+        </select>
+        <div class="quick-title">QUICK TASKS</div>
+        <button class="quick-action" data-prompt="Help me find suitable legal jobs in Pattaya. Ask only for details you really need.">Find work</button>
+        <button class="quick-action" data-prompt="Help me prepare a professional hotel job application.">Job application</button>
+        <button class="quick-action" data-prompt="Help me improve my CV. Ask me for the missing details one at a time.">Improve my CV</button>
+        <button class="quick-action" data-prompt="Practise a hotel job interview with me, one question at a time.">Interview practice</button>
+        <button class="quick-action" data-prompt="Help me plan today's work tasks in a simple priority list.">Plan my tasks</button>
+        <p class="privacy-note">Chat history is saved only in this browser on this device. Do not enter passwords, verification codes or private financial details.</p>
+      </aside>
+
+      <section class="chat-card" aria-label="Assistant chat">
+        <div class="chat-heading">
+          <div><strong>Chat with your assistant</strong><div class="muted small">Text and voice · Burmese · Thai · English</div></div>
+          <button id="clearChat" class="subtle-button" type="button">Clear chat</button>
+        </div>
+        <div id="chatMessages" class="messages" aria-live="polite">
+          <div class="message assistant"><div class="bubble">မင်္ဂလာပါ။ ကျွန်တော် Alex's Gurd ပါ။ အလုပ်ရှာဖွေခြင်း၊ CV ပြင်ဆင်ခြင်း၊ အလုပ်လျှောက်စာနဲ့ အင်တာဗျူးလေ့ကျင့်ခြင်းတွေကို ကူညီပေးနိုင်ပါတယ်။ ဘာကစလုပ်မလဲ?</div><span class="message-label">Alex's Gurd</span></div>
+        </div>
+        <div id="errorBox" class="error" role="alert" hidden></div>
+        <form id="chatForm" class="composer">
+          <textarea id="userMessage" rows="2" maxlength="4000" placeholder="Type your work task here…" aria-label="Your message"></textarea>
+          <div class="composer-actions">
+            <button id="voiceButton" class="voice-button" type="button" title="Speak your message">🎙 Speak</button>
+            <span id="voiceStatus" class="muted small">Voice input depends on browser support.</span>
+            <button id="sendButton" class="send-button" type="submit">Send</button>
+          </div>
+        </form>
+        <div class="bottom-note">AI can make mistakes. Check job details and employer requirements before acting.</div>
+      </section>
+    </section>
+    <footer><a href="/">← Back to Alex AI Tools</a><span>Alex AI Studio</span></footer>
+  </main>
+  <script src="assistant.js" defer></script>
+</body>
+</html>
