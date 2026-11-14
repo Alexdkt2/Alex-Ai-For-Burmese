@@ -23,8 +23,9 @@ export async function onRequestPost({ request, env }) {
       }, { status: 503 });
     }
 
-    const suppliedCode = request.headers.get("x-gurd-access-code") || "";
-    if (suppliedCode.length !== env.ALEX_GURD_ACCESS_CODE.length || suppliedCode !== env.ALEX_GURD_ACCESS_CODE) {
+    const suppliedCode = (request.headers.get("x-gurd-access-code") || "").trim();
+    const expectedCode = String(env.ALEX_GURD_ACCESS_CODE).trim();
+    if (!suppliedCode || suppliedCode.length !== expectedCode.length || suppliedCode !== expectedCode) {
       return Response.json({ error: "Access code is missing or incorrect." }, { status: 401 });
     }
 
