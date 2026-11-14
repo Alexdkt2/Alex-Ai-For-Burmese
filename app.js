@@ -256,3 +256,69 @@ Best regards`;
 function copyJob() {
   copyText($("jobResult").value);
 }
+
+let assistantLastReply = "";
+let assistantHistory = [];
+
+function addAssistantMessage(text, role) {
+  const chat = $("assistantChat");
+  const item = document.createElement("div");
+  item.className = "chat-message " + (role === "user" ? "user-message" : "assistant-message");
+  item.textContent = text;
+  chat.appendChild(item);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendAssistantMessage() {
+  const input = $("assistantInput");
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+  addAssistantMessage(message, "user");
+  $("assistantStatus").textContent = "Thinking...";
+  try {
+    const response = await fetch("/api/assistant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, language: $("assistantLanguage").value, history: assistantHistory.slice(-8) })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Assistant service unavailable.");
+    assistantLastReply = String(data.reply || "").trim();
+    if (!assistantLastReply) throw new Error("Empty assistant reply.");
+    assistantHistory.push({ role: "user", text: message }, { role: "assistant", text: assistantLastReply });
+    assistantHistory = assistantHistory.slice(-12);
+    addAssistantMessage(assistantLastReply, "assistant");
+    $("assistantStatus").textContent = "Reply ready.";
+  } catch (error) {
+    $("assistantStatus").textContent = error.message;
+    addAssistantMessage(error.message, "assistant");
+  }
+}
+
+function startAssistantVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $("assistantStatus").textContent = "Speech recognition unavailable in this browser. Type instead."; return; }
+  const rec = new SR();
+  const lang = $("assistantLanguage").value;
+  rec.lang = lang === "my" ? "my-MM" : lang === "th" ? "th-TH" : "en-US";
+  rec.continuous = false;
+  rec.interimResults = false;
+  $("assistantStatus").textContent = "Listening...";
+  rec.onresult = event => {
+    $("assistantInput").value = event.results[0][0].transcript;
+    $("assistantStatus").textContent = "Speech recognized. Press Send.";
+  };
+  rec.onerror = () => $("assistantStatus").textContent = "Microphone or speech recognition error.";
+  rec.start();
+}
+
+function speakAssistantReply() {
+  if (!assistantLastReply) { $("assistantStatus").textContent = "No reply to read yet."; return; }
+  if (!("speechSynthesis" in window)) { $("assistantStatus").textContent = "Text-to-speech unavailable."; return; }
+  const utterance = new SpeechSynthesisUtterance(assistantLastReply);
+  const lang = $("assistantLanguage").value;
+  utterance.lang = lang === "my" ? "my-MM" : lang === "th" ? "th-TH" : "en-US";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
+}
