@@ -1,27 +1,40 @@
-# Alex AI Tools
+# Alex AI Tools + Alex's Gurd
 
-A mobile-friendly static web app with three starter features:
-1. CV Maker — editable form, live preview, browser print / Save as PDF.
-2. Voice Translator — browser speech recognition (where supported), text translation via MyMemory public API, and browser text-to-speech.
-3. Thailand Job Finder — targeted searches across JobThai, JobsDB, Indeed Thailand, JobTopGun and Google. This starter opens search results; it does not scrape or aggregate job listings.
+A mobile-friendly web app for work and productivity. Existing tools are preserved, and **Alex's Gurd** is added as a separate personal work-assistant page.
 
-## Project safety
-- Deploy this project as a **separate Cloudflare Pages project**.
-- Do not replace or edit the existing `alex-ai-studio` Worker or its TikTok OAuth routes / KV token storage.
-- The existing Worker URL can remain online. This starter can later be connected through a separate subdomain or Pages URL.
+## Existing tools (preserved)
+- CV Maker — editable form and browser print / Save as PDF.
+- Text and voice translation — multilingual translation through the existing Cloudflare Pages API route.
+- Thailand Job Helper — prepares application text and opens job-search resources; it does not scrape job sites or guarantee live vacancies.
 
-## Deploy from Android using GitHub
-1. Extract `alex-ai-tools.zip`.
-2. In GitHub, create a new repository named `alex-ai-tools`.
-3. Upload `index.html`, `styles.css`, `app.js`, and this `README.md` to the repository root.
-4. In Cloudflare Dashboard, open **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-5. Select the `alex-ai-tools` repository.
-6. Framework preset: **None**. Build command: leave blank. Build output directory: `/` (or `.` if the UI requires it).
-7. Deploy. Cloudflare will provide a Pages URL.
+## New: Alex's Gurd
+- Separate page: `/assistant.html`
+- Work-focused assistant for job-search planning, CVs, applications, interview practice, workplace communication and task planning.
+- Text chat and browser speech input / text-to-speech output where supported.
+- Burmese, Thai and English reply-language setting.
+- Chat history is stored in local browser storage on the device. Clearing browser site data removes it.
+- The assistant endpoint is `/api/assistant` and calls Gemini from the Cloudflare Pages Function. The API key is server-side only.
 
-## Notes and next production steps
-- Voice recognition availability depends on the browser/device and microphone permission. Use HTTPS and allow microphone access.
-- Translation is sent to MyMemory's public translation endpoint. Do not enter confidential personal, legal, medical, or financial information.
-- Job searches link to original platforms. Before calling this an all-site live job aggregator, build source integrations, deduplication, freshness checks, and a lawful data-access approach.
-- CV data stays in the browser in this starter and is not uploaded to a server.
-- Add a privacy notice and terms page before public promotion or collecting user data.
+## Required Cloudflare configuration
+1. Open the Cloudflare Pages project connected to this repository.
+2. Go to **Settings → Variables and Secrets** (the exact label may vary).
+3. Add `GEMINI_API_KEY` as a secret for the Pages Functions runtime.
+4. Redeploy the latest branch/commit.
+5. Open `/api/assistant` on the deployed site. It should report whether the key is configured.
+6. Open `/assistant.html` and send a short test message.
+
+The repository already has a translation function that also expects `GEMINI_API_KEY`. If that secret is already configured for the same Pages project, the assistant can use it too. Do not paste the key into source code, GitHub files, chat, or the browser.
+
+## Cost and limitations
+- This code does not guarantee that Gemini API usage is free. Check the current Google AI Studio model, quota and billing terms before using it regularly. Set usage limits where available.
+- Browser speech recognition and speech synthesis depend on the Android browser, installed voices, microphone permission and language support. Text chat remains available if voice is unsupported.
+- This is an assistant interface, not an autonomous agent. It does not apply for jobs, browse live listings, send messages, change accounts or execute actions by itself.
+- Chat history is device-local; there is no encrypted cloud memory or account sync in this version.
+- Do not enter passwords, one-time codes, full bank details or sensitive identity documents.
+- Job information and employer details must be independently verified before applying or accepting work.
+
+## Deploy
+Deploy this repository using Cloudflare Pages **Connect to Git**. Use the repository's normal static-site setup with no framework build command and the project root as the output directory. Pages Functions in the `functions/` folder are deployed with the site.
+
+## Existing TikTok Worker
+Do not overwrite or modify the separate `alex-ai-studio` Worker, TikTok OAuth routes or its KV token storage as part of this project. TikTok LIVE integration is not included in Alex's Gurd.
