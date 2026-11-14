@@ -151,7 +151,7 @@ async function checkConnection() {
   try {
     const response = await fetch("/api/assistant", { method: "GET" });
     const data = await response.json();
-    $("connectionStatus").textContent = data.configured ? "AI service configured" : "Setup needed: add Gemini API key";
+    $("connectionStatus").textContent = data.configured ? "AI service and private access configured" : "Setup needed: configure Cloudflare secrets";
   } catch {
     $("connectionStatus").textContent = "AI service status unavailable";
   }
