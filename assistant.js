@@ -61,7 +61,10 @@ async function sendMessage(text) {
   try {
     const response = await fetch("/api/assistant", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-gurd-access-code": $("accessCode").value.trim()
+      },
       body: JSON.stringify({
         message: clean,
         language: $("replyLanguage").value,
