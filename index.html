@@ -20,14 +20,14 @@
 <body>
 
 <header class="header">
-  <div class="logo">ALEX <span>AI TOOLS</span></div>
+  <div class="logo">ALEX <span>'S GURD</span></div>
   <p>Free Tools for Everyone</p>
 </header>
 
 <main>
   <section class="hero">
-    <h1>Welcome to Alex AI Tools</h1>
-    <p>Smart, simple and free tools for your daily life.</p>
+    <h1>Welcome to Alex's Gurd</h1>
+    <p>Your personal work assistant, with your existing tools preserved.</p>
   </section>
 
   <!-- Google AdSense ad unit -->
@@ -47,9 +47,21 @@
     <button onclick="showTool('voice')">🎤 Voice Translator</button>
     <button onclick="showTool('cv')">📄 CV Maker</button>
     <button onclick="showTool('jobs')">💼 Thailand Job Helper</button>
+  <button onclick="showTool('assistant')">🤖 Alex's Gurd Assistant</button>
   </section>
 
   <section id="workspace">
+    <div id="panel-assistant" class="panel" hidden>
+      <h2>Alex's Gurd — Work Assistant</h2>
+      <p class="helper-note">Get help with job applications, CVs, interviews and workplace messages. AI replies require GEMINI_API_KEY in Cloudflare Pages settings.</p>
+      <label for="assistantLanguage">Reply language</label>
+      <select id="assistantLanguage"><option value="auto">Auto</option><option value="en">English</option><option value="my">Burmese</option><option value="th">Thai</option></select>
+      <div id="assistantChat" class="assistant-chat" aria-live="polite"><div class="chat-message assistant-message">Hello! I'm Alex's Gurd. What work task can I help you with?</div></div>
+      <textarea id="assistantInput" placeholder="Type your work task..." rows="3"></textarea>
+      <div class="assistant-actions"><button type="button" onclick="sendAssistantMessage()">Send</button><button type="button" class="secondary-button" onclick="startAssistantVoice()">Speak</button><button type="button" class="secondary-button" onclick="speakAssistantReply()">Read reply</button></div>
+      <p id="assistantStatus" class="helper-note" role="status">Ready. Speech features depend on browser support.</p>
+    </div>
+
 
     <div id="panel-translate" class="panel" hidden>
       <h2>Text Translator</h2>
