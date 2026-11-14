@@ -19,11 +19,12 @@ A mobile-friendly web app for work and productivity. Existing tools are preserve
 1. Open the Cloudflare Pages project connected to this repository.
 2. Go to **Settings → Variables and Secrets** (the exact label may vary).
 3. Add `GEMINI_API_KEY` as a secret for the Pages Functions runtime.
-4. Redeploy the latest branch/commit.
-5. Open `/api/assistant` on the deployed site. It should report whether the key is configured.
-6. Open `/assistant.html` and send a short test message.
+4. Add `ALEX_GURD_ACCESS_CODE` as a second secret. Choose a long, unique passphrase and keep it private.
+5. Redeploy the latest branch/commit.
+6. Open `/api/assistant` on the deployed site. It should report whether both secrets are configured.
+7. Open `/assistant.html`, enter the access passphrase, and send a short test message.
 
-The repository already has a translation function that also expects `GEMINI_API_KEY`. If that secret is already configured for the same Pages project, the assistant can use it too. Do not paste the key into source code, GitHub files, chat, or the browser.
+The repository already has a translation function that also expects `GEMINI_API_KEY`. If that secret is already configured for the same Pages project, the assistant can use it too. Do not paste either secret into source code, GitHub files, chat, or the browser address bar. The passphrase is entered only in the dashboard form and sent over HTTPS to the Pages Function. This is a basic personal-use gate, not enterprise-grade authentication; do not publish the assistant as a public service.
 
 ## Cost and limitations
 - This code does not guarantee that Gemini API usage is free. Check the current Google AI Studio model, quota and billing terms before using it regularly. Set usage limits where available.
