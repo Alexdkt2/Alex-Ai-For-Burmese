@@ -65,7 +65,7 @@ async function sendMessage(text) {
       body: JSON.stringify({
         message: clean,
         language: $("replyLanguage").value,
-        history: history.filter(item => item.role === "user" || item.role === "assistant").slice(-8)
+        history: history.slice(0, -1).filter(item => item.role === "user" || item.role === "assistant").slice(-8)
       })
     });
     const data = await response.json().catch(() => ({}));
