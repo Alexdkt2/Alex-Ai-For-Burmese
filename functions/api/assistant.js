@@ -8,17 +8,24 @@ const LANGUAGES = {
 export async function onRequestGet({ env }) {
   return Response.json({
     service: "Alex's Gurd",
-    configured: Boolean(env.GEMINI_API_KEY),
-    message: env.GEMINI_API_KEY ? "Assistant API is configured." : "Add GEMINI_API_KEY in Cloudflare Pages environment variables."
+    configured: Boolean(env.GEMINI_API_KEY && env.ALEX_GURD_ACCESS_CODE),
+    message: env.GEMINI_API_KEY && env.ALEX_GURD_ACCESS_CODE
+      ? "Assistant API and access protection are configured."
+      : "Add GEMINI_API_KEY and ALEX_GURD_ACCESS_CODE in Cloudflare Pages environment variables."
   });
 }
 
 export async function onRequestPost({ request, env }) {
   try {
-    if (!env.GEMINI_API_KEY) {
+    if (!env.GEMINI_API_KEY || !env.ALEX_GURD_ACCESS_CODE) {
       return Response.json({
-        error: "AI is not connected yet. Add GEMINI_API_KEY in Cloudflare Pages > Settings > Environment variables."
+        error: "Setup required: add GEMINI_API_KEY and ALEX_GURD_ACCESS_CODE in Cloudflare Pages > Settings > Variables and Secrets."
       }, { status: 503 });
+    }
+
+    const suppliedCode = request.headers.get("x-gurd-access-code") || "";
+    if (suppliedCode.length !== env.ALEX_GURD_ACCESS_CODE.length || suppliedCode !== env.ALEX_GURD_ACCESS_CODE) {
+      return Response.json({ error: "Access code is missing or incorrect." }, { status: 401 });
     }
 
     const body = await request.json();
